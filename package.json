@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "nodemon server.js", 
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js",
+    "server": "nodemon server.js",
+    "lint": "next lint"
   },
   "dependencies": {
     "cors": "^2.8.5",
