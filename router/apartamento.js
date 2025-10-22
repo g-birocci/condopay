@@ -14,6 +14,26 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// GET /api/apartamentos/find?numeroAp=101&email=foo@bar.com
+// Busca um apartamento por número e email do morador (case-insensitive)
+router.get('/find', async (req, res) => {
+  try {
+    const { numeroAp, email } = req.query;
+    if (!numeroAp || !email) {
+      return res.status(400).json({ error: 'numeroAp e email são obrigatórios' });
+    }
+    const item = await Apartamento.findOne({
+      numeroAp: String(numeroAp).trim(),
+      residenteEmail: String(email).trim().toLowerCase(),
+    }).lean();
+    if (!item) return res.status(404).json({ error: 'Apartamento não encontrado' });
+    res.json(item);
+  } catch (error) {
+    console.error('Erro ao buscar por numero/email:', error);
+    res.status(500).json({ error: 'Erro ao buscar apartamento' });
+  }
+});
+
 // GET /api/apartamentos/pagos - apartamentos com pagamento true
 router.get('/pagos', async (_req, res) => {
   try {
