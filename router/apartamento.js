@@ -98,6 +98,16 @@ router.post('/', async (req, res) => {
       dueDate,
     } = req.body;
 
+    // Validação simples para evitar 500 por dados inválidos
+    const numeroApStr = String(numeroAp || '').trim();
+    const andarNum = Number(andar);
+    if (!numeroApStr) {
+      return res.status(400).json({ error: 'numeroAp obrigatório' });
+    }
+    if (!Number.isFinite(andarNum)) {
+      return res.status(400).json({ error: 'andar deve ser número' });
+    }
+
     if (!numeroAp || andar === undefined) {
       return res.status(400).json({ error: 'Número do apartamento e andar são obrigatórios' });
     }
@@ -116,6 +126,12 @@ router.post('/', async (req, res) => {
     await novoApartamento.save();
     res.status(201).json(novoApartamento);
   } catch (error) {
+    if (error && error.code === 11000) {
+      return res.status(409).json({ error: 'numeroAp já cadastrado' });
+    }
+    if (error && error.name === 'ValidationError') {
+      return res.status(400).json({ error: 'Dados inválidos', details: error.message });
+    }
     console.error('Erro ao criar apartamento:', error);
     res.status(500).json({ error: 'Erro ao criar apartamento' });
   }
