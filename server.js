@@ -18,7 +18,11 @@ app.use(express.json());
 //   res.json({ mensagem: 'API funcionando!' });
 // });
 
-// Roteamento do Next.js
+// Importar e registrar rotas da API
+const apartamentosRouter = require('./router/apartamento');
+app.use('/api/apartamentos', apartamentosRouter);
+
+// Roteamento do Next.js (deve ser o último)
 app.use((req, res) => {
   return handle(req, res);
 });
