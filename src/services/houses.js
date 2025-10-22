@@ -7,3 +7,4 @@ export const HOUSES = [
 ];
 
 export const getHouses = () => HOUSES;
+
