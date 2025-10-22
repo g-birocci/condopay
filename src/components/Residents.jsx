@@ -36,7 +36,7 @@ export default function Residents({ data }) {
     [data]
   );
 
-  const goTo = (id) => router.push(`/houses/${id}`);
+  const goTo = (id) => router.push(`/apartamentos`);
 
   return (
     <section className="w-full max-w-3xl rounded-2xl border border-gray-200 bg-white shadow-sm">

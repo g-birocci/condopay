@@ -10,7 +10,7 @@ export default function NavBar() {
         </div>
         <div className="flex items-center gap-4">
           <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</Link>
-          <Link href="/houses" className="text-sm text-gray-600 hover:text-gray-900">Apartamentos</Link>
+          <Link href="/apartamentos" className="text-sm text-gray-600 hover:text-gray-900">Apartamentos</Link>
           <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Relatórios</Link>
         </div>
       </div>

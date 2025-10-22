@@ -14,6 +14,43 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// GET /api/apartamentos/pagos - apartamentos com pagamento true
+router.get('/pagos', async (_req, res) => {
+  try {
+    const itens = await Apartamento.find({ pagamento: true }).lean();
+    res.json(itens);
+  } catch (error) {
+    console.error('Erro ao listar pagos:', error);
+    res.status(500).json({ error: 'Erro ao listar apartamentos pagos' });
+  }
+});
+
+// GET /api/apartamentos/pendentes - apartamentos com pagamento false
+router.get('/pendentes', async (_req, res) => {
+  try {
+    const itens = await Apartamento.find({ pagamento: false }).lean();
+    res.json(itens);
+  } catch (error) {
+    console.error('Erro ao listar pendentes:', error);
+    res.status(500).json({ error: 'Erro ao listar apartamentos pendentes' });
+  }
+});
+
+// GET /api/apartamentos/a-vencer - não pagos que vencem em até 5 dias
+router.get('/a-vencer', async (_req, res) => {
+  try {
+    const now = new Date();
+    const in5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+    const itens = await Apartamento.find({ pagamento: false, dueDate: { $gte: now, $lte: in5 } })
+      .sort({ dueDate: 1 })
+      .lean();
+    res.json(itens);
+  } catch (error) {
+    console.error('Erro ao listar a vencer:', error);
+    res.status(500).json({ error: 'Erro ao listar boletos a vencer' });
+  }
+});
+
 // GET /api/apartamentos/:id - Detalhe
 router.get('/:id', async (req, res) => {
   try {
