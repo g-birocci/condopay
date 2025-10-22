@@ -13,6 +13,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/apartamentos/pagos - lista apartamentos pagos
+router.get('/pagos', async (req, res) => {
+  try {
+    const items = await Apartamento.find({ pago: true }).lean();
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao obter apartamentos pagos' });
+  }
+});
+
+// GET /api/apartamentos/nao-pagos - lista apartamentos não pagos
+router.get('/nao-pagos', async (req, res) => {
+  try {
+    const items = await Apartamento.find({ pago: false }).lean();
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao obter apartamentos não pagos' });
+  }
+});
+
 // GET /api/apartamentos/:id - detalhe
 router.get('/:id', async (req, res) => {
   try {

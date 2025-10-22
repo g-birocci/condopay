@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Apartamento = require('../models/Apartamento');
+const { notifyAdmins, notifyUser } = require('../lib/events');
 
 // GET /api/apartamentos - Lista todos os apartamentos
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
     const apartamentos = await Apartamento.find().sort({ andar: 1, numeroAp: 1 });
     res.json(apartamentos);
@@ -13,7 +14,44 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/apartamentos/:id - Obtém detalhes de um apartamento
+// GET /api/apartamentos/pagos - apartamentos com pagamento true
+router.get('/pagos', async (_req, res) => {
+  try {
+    const itens = await Apartamento.find({ pagamento: true }).lean();
+    res.json(itens);
+  } catch (error) {
+    console.error('Erro ao listar pagos:', error);
+    res.status(500).json({ error: 'Erro ao listar apartamentos pagos' });
+  }
+});
+
+// GET /api/apartamentos/pendentes - apartamentos com pagamento false
+router.get('/pendentes', async (_req, res) => {
+  try {
+    const itens = await Apartamento.find({ pagamento: false }).lean();
+    res.json(itens);
+  } catch (error) {
+    console.error('Erro ao listar pendentes:', error);
+    res.status(500).json({ error: 'Erro ao listar apartamentos pendentes' });
+  }
+});
+
+// GET /api/apartamentos/a-vencer - não pagos que vencem em até 5 dias
+router.get('/a-vencer', async (_req, res) => {
+  try {
+    const now = new Date();
+    const in5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+    const itens = await Apartamento.find({ pagamento: false, dueDate: { $gte: now, $lte: in5 } })
+      .sort({ dueDate: 1 })
+      .lean();
+    res.json(itens);
+  } catch (error) {
+    console.error('Erro ao listar a vencer:', error);
+    res.status(500).json({ error: 'Erro ao listar boletos a vencer' });
+  }
+});
+
+// GET /api/apartamentos/:id - Detalhe
 router.get('/:id', async (req, res) => {
   try {
     const apartamento = await Apartamento.findById(req.params.id);
@@ -30,7 +68,15 @@ router.get('/:id', async (req, res) => {
 // POST /api/apartamentos - Cria novo apartamento
 router.post('/', async (req, res) => {
   try {
-    const { numeroAp, andar, pagamento = false } = req.body;
+    const {
+      numeroAp,
+      andar,
+      pagamento = false,
+      residenteNome = '',
+      residenteEmail = '',
+      valor = 0,
+      dueDate,
+    } = req.body;
 
     if (!numeroAp || andar === undefined) {
       return res.status(400).json({ error: 'Número do apartamento e andar são obrigatórios' });
@@ -41,7 +87,10 @@ router.post('/', async (req, res) => {
       andar: Number(andar),
       pagamento,
       dataPagamento: pagamento ? new Date() : null,
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 30)) // Vence em 30 dias
+      residenteNome,
+      residenteEmail: String(residenteEmail).toLowerCase(),
+      valor: Number(valor) || 0,
+      dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
     await novoApartamento.save();
@@ -52,7 +101,36 @@ router.post('/', async (req, res) => {
   }
 });
 
-// POST /api/apartamentos/:id/notify - Notifica o morador
+// GET /api/apartamentos/pendentes/list - Vencidos e não pagos
+router.get('/pendentes/list', async (_req, res) => {
+  try {
+    const now = new Date();
+    const items = await Apartamento.find({ pagamento: false, dueDate: { $lt: now } })
+      .sort({ dueDate: 1 })
+      .lean();
+    res.json(items);
+  } catch (error) {
+    console.error('Erro ao listar pendentes:', error);
+    res.status(500).json({ error: 'Erro ao listar boletos pendentes' });
+  }
+});
+
+// GET /api/apartamentos/vencendo/list - Vence em até 5 dias e não pago
+router.get('/vencendo/list', async (_req, res) => {
+  try {
+    const now = new Date();
+    const in5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+    const items = await Apartamento.find({ pagamento: false, dueDate: { $gte: now, $lte: in5 } })
+      .sort({ dueDate: 1 })
+      .lean();
+    res.json(items);
+  } catch (error) {
+    console.error('Erro ao listar boletos a vencer:', error);
+    res.status(500).json({ error: 'Erro ao listar boletos a vencer' });
+  }
+});
+
+// POST /api/apartamentos/:id/notify - Notifica o morador (manual pelo admin)
 router.post('/:id/notify', async (req, res) => {
   try {
     const apartamento = await Apartamento.findById(req.params.id);
@@ -63,6 +141,15 @@ router.post('/:id/notify', async (req, res) => {
     apartamento.lastNotified = new Date();
     await apartamento.save();
 
+    if (apartamento.residenteEmail) {
+      notifyUser(String(apartamento.residenteEmail).toLowerCase(), 'boleto_alert', {
+        apartamentoId: apartamento._id,
+        numeroAp: apartamento.numeroAp,
+        dueDate: apartamento.dueDate,
+        message: 'Seu boleto está em atraso. Por favor, efetue o pagamento.'
+      });
+    }
+
     res.json({ message: 'Notificação enviada', lastNotified: apartamento.lastNotified });
   } catch (error) {
     console.error('Erro ao notificar:', error);
@@ -70,7 +157,7 @@ router.post('/:id/notify', async (req, res) => {
   }
 });
 
-// POST /api/apartamentos/:id/pay - Registra pagamento
+// POST /api/apartamentos/:id/pay - Registra pagamento (simulação do usuário)
 router.post('/:id/pay', async (req, res) => {
   try {
     const { amount } = req.body;
@@ -83,16 +170,19 @@ router.post('/:id/pay', async (req, res) => {
       return res.status(404).json({ error: 'Apartamento não encontrado' });
     }
 
-    // Registra o pagamento
     apartamento.pagamento = true;
     apartamento.dataPagamento = new Date();
-    apartamento.history.push({
-      amount,
-      date: new Date(),
-      note: 'Pagamento registrado'
-    });
+    apartamento.history.push({ amount, date: new Date(), note: 'Pagamento registrado' });
 
     await apartamento.save();
+
+    notifyAdmins('payment_confirmed', {
+      apartamentoId: apartamento._id,
+      numeroAp: apartamento.numeroAp,
+      amount,
+      dataPagamento: apartamento.dataPagamento,
+    });
+
     res.json(apartamento);
   } catch (error) {
     console.error('Erro ao registrar pagamento:', error);
@@ -101,3 +191,4 @@ router.post('/:id/pay', async (req, res) => {
 });
 
 module.exports = router;
+
