@@ -22,9 +22,12 @@ export default function Login() {
         <label className="text-sm">Password</label>
         <input type="password" className="w-full border rounded-xl px-3 py-2 mt-1 mb-4" placeholder="••••••••" />
 
-        <button onClick={go} className="w-full rounded-xl bg-blue-600 text-white py-2 hover:bg-blue-700 transition">
-          Log In
-        </button>
+       <button
+  onClick={go}
+  className="w-35 mx-auto block rounded-lg bg-blue-600 text-white py-1.5 text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition"
+>
+  Log In
+</button>
 
         <button className="block mx-auto mt-3 text-xs text-gray-500 hover:underline">Forgot password?</button>
       </div>
