@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import Head from 'next/head';
-import dynamic from 'next/dynamic';
-import NavBar from '@/components/NavBar';
+import { useState } from "react";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import dynamic from "next/dynamic";
+import NavBar from "@/components/NavBar";
 
 // Importa o componente AddAp de forma dinâmica
-const AddAp = dynamic(() => import('@/components/AddAp'), { ssr: false });
+const AddAp = dynamic(() => import("@/components/AddAp"), { ssr: false });
 
 export default function Dashboard() {
   const [showAddAp, setShowAddAp] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -18,14 +20,28 @@ export default function Dashboard() {
       <NavBar />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <button
-            onClick={() => setShowAddAp(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Adicionar Apartamento
-          </button>
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
+
+          <div className="space-y-4 max-w-md">
+            {/* Botão Adicionar Apartamento */}
+            <button
+              onClick={() => setShowAddAp(true)}
+              className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+            >
+              <span className="mr-2">+</span>
+              Adicionar Apartamento
+            </button>
+
+            {/* Botão Ver Apartamentos */}
+            <button
+              onClick={() => router.push("/apartamentos")}
+              className="w-full px-4 py-3 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center"
+            >
+              <span className="mr-2">📋</span>
+              Ver Apartamentos
+            </button>
+          </div>
         </div>
 
         {/* Modal de Adicionar Apartamento */}
@@ -38,7 +54,7 @@ export default function Dashboard() {
               >
                 ×
               </button>
-              <AddAp />
+              <AddAp onClose={() => setShowAddAp(false)} />
             </div>
           </div>
         )}
@@ -49,12 +65,12 @@ export default function Dashboard() {
             <h3 className="text-lg font-medium mb-2">Total de Apartamentos</h3>
             <p className="text-3xl font-semibold text-blue-600">0</p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h3 className="text-lg font-medium mb-2">Pagamentos em Dia</h3>
             <p className="text-3xl font-semibold text-green-600">0</p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h3 className="text-lg font-medium mb-2">Pagamentos em Atraso</h3>
             <p className="text-3xl font-semibold text-red-600">0</p>

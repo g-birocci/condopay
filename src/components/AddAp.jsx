@@ -1,37 +1,43 @@
 // src/components/AddAp.jsx
-import { useState } from 'react';
-import API from '../services/api'; // ← Axios configurado para /api
+import { useState } from "react";
+import API from "../services/api"; // ← Axios configurado para /api
 
-export default function AddAp() {
-  const [numeroAp, setNumeroAp] = useState('');
-  const [andar, setAndar] = useState('');
+export default function AddAp({ onClose }) {
+  const [numeroAp, setNumeroAp] = useState("");
+  const [andar, setAndar] = useState("");
   const [pagamento, setPagamento] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     setSuccess(false);
 
     try {
       // Envia para /api/apartamentos (registrado no Express)
-      await API.post('/apartamentos', {
+      await API.post("/apartamentos", {
         numeroAp: numeroAp.trim(),
         andar: Number(andar),
-        pagamento
+        pagamento,
       });
 
       setSuccess(true);
+      // Fecha o modal após sucesso
+      setTimeout(() => {
+        onClose?.();
+      }, 2000);
       // Limpa o formulário
-      setNumeroAp('');
-      setAndar('');
+      setNumeroAp("");
+      setAndar("");
       setPagamento(false);
     } catch (err) {
-      console.error('Erro ao adicionar apartamento:', err);
-      const msg = err.response?.data?.error || 'Não foi possível adicionar o apartamento.';
+      console.error("Erro ao adicionar apartamento:", err);
+      const msg =
+        err.response?.data?.error ||
+        "Não foi possível adicionar o apartamento.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -40,7 +46,9 @@ export default function AddAp() {
 
   return (
     <div className="p-6 bg-white rounded-xl shadow border border-gray-200 max-w-md">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Adicionar Apartamento</h2>
+      <h2 className="text-xl font-bold text-gray-800 mb-4">
+        Adicionar Apartamento
+      </h2>
 
       {success && (
         <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
@@ -91,7 +99,10 @@ export default function AddAp() {
             onChange={(e) => setPagamento(e.target.checked)}
             className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
           />
-          <label htmlFor="pagamento" className="ml-2 text-sm font-medium text-gray-700">
+          <label
+            htmlFor="pagamento"
+            className="ml-2 text-sm font-medium text-gray-700"
+          >
             Pagamento efetuado?
           </label>
         </div>
@@ -101,13 +112,21 @@ export default function AddAp() {
           disabled={loading}
           className={`w-full py-2.5 px-4 rounded-lg font-medium text-white transition ${
             loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-700'
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
-          {loading ? 'Salvando...' : 'Adicionar Apartamento'}
+          {loading ? "Salvando..." : "Adicionar Apartamento"}
         </button>
       </form>
+
+      {/* Botão para Ver Lista de Apartamentos */}
+      <button
+        onClick={onListClick}
+        className="mt-4 w-full py-2.5 px-4 rounded-lg font-medium text-blue-600 border border-blue-600 hover:bg-blue-50 transition"
+      >
+        Ver Lista de Apartamentos
+      </button>
     </div>
   );
 }
