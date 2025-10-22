@@ -17,6 +17,9 @@ app.use(express.json());
 // app.get('/api/exemplo', (req, res) => {
 //   res.json({ mensagem: 'API funcionando!' });
 // });
+// Rotas de apartamentos
+const apartamentosRouter = require('./routes/apartamentos');
+app.use('/api/apartamentos', apartamentosRouter);
 
 // Roteamento do Next.js
 app.use((req, res) => {
