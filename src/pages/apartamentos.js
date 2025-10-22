@@ -23,71 +23,86 @@ export default function Apartamentos() {
     }
   };
 
-  // Modal de detalhes do apartamento
+  const pagar = async (ap) => {
+    try {
+      await API.post(`/apartamentos/${ap._id}/pay`, { amount: ap.valor || 0.01 });
+      alert(`Pagamento confirmado para Ap ${ap.numeroAp}.`);
+      await loadApartamentos();
+    } catch (e) {
+      console.error("Erro ao pagar boleto:", e);
+      alert("Falha ao registrar pagamento.");
+    }
+  };
+
+  const notificar = async (ap) => {
+    try {
+      await API.post(`/apartamentos/${ap._id}/notify`);
+      alert(`Simulação: e-mail enviado para ${ap.residenteEmail || "morador"} (Ap ${ap.numeroAp}).`);
+      await loadApartamentos();
+    } catch (e) {
+      console.error("Erro ao notificar:", e);
+      alert("Falha ao enviar notificação.");
+    }
+  };
+
   const DetalhesModal = ({ apartamento, onClose }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Detalhes do Apartamento</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ×
-          </button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">×</button>
         </div>
 
         <div className="space-y-4">
           <div>
             <p className="text-sm text-gray-500">Número</p>
-            <p className="font-medium">{apartamento.numero}</p>
+            <p className="font-medium">{apartamento.numeroAp}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Bloco</p>
-            <p className="font-medium">{apartamento.bloco}</p>
+            <p className="text-sm text-gray-500">Andar</p>
+            <p className="font-medium">{apartamento.andar}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Proprietário</p>
-            <p className="font-medium">{apartamento.proprietario}</p>
+            <p className="text-sm text-gray-500">Morador</p>
+            <p className="font-medium">{apartamento.residenteNome || "-"} ({apartamento.residenteEmail || "-"})</p>
           </div>
 
           <div>
             <p className="text-sm text-gray-500">Vencimento</p>
-            <p className="font-medium">
-              {new Date(apartamento.dueDate).toLocaleDateString()}
-            </p>
+            <p className="font-medium">{new Date(apartamento.dueDate).toLocaleDateString()}</p>
           </div>
 
           <div>
             <p className="text-sm text-gray-500">Status</p>
-            <span
-              className={`inline-block px-2 py-1 rounded-full text-sm ${
-                apartamento.status === "Pago"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {apartamento.status}
+            <span className={`inline-block px-2 py-1 rounded-full text-sm ${apartamento.pagamento ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+              {apartamento.pagamento ? "Pago" : "Pendente"}
             </span>
           </div>
 
-          {apartamento.history && (
+          {apartamento.history && apartamento.history.length > 0 && (
             <div>
-              <p className="text-sm text-gray-500 mb-2">
-                Histórico de Pagamentos
-              </p>
+              <p className="text-sm text-gray-500 mb-2">Histórico de Pagamentos</p>
               <div className="space-y-2">
-                {apartamento.history.map((pagamento, index) => (
-                  <div key={index} className="text-sm bg-gray-50 p-2 rounded">
-                    <p>Data: {new Date(pagamento.date).toLocaleDateString()}</p>
-                    <p>Valor: R$ {pagamento.valor}</p>
+                {apartamento.history.map((p, i) => (
+                  <div key={i} className="text-sm bg-gray-50 p-2 rounded">
+                    <p>Data: {new Date(p.date).toLocaleDateString()}</p>
+                    <p>Valor: R$ {typeof p.amount === 'number' ? p.amount.toFixed(2) : p.amount}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+          <div className="flex gap-2 pt-2">
+            {!apartamento.pagamento && (
+              <button onClick={() => pagar(apartamento)} className="px-3 py-2 bg-blue-600 text-white rounded">Pagar</button>
+            )}
+            {!apartamento.pagamento && (
+              <button onClick={() => notificar(apartamento)} className="px-3 py-2 bg-yellow-500 text-white rounded">Notificar</button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -118,35 +133,25 @@ export default function Apartamentos() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-medium">Apartamento {ap.numero}</h3>
-                    <p className="text-sm text-gray-500">Bloco {ap.bloco}</p>
+                    <h3 className="font-medium">Apartamento {ap.numeroAp}</h3>
+                    <p className="text-sm text-gray-500">Andar {ap.andar}</p>
                   </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      ap.status === "Pago"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {ap.status}
+                  <span className={`px-2 py-1 rounded-full text-xs ${ap.pagamento ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                    {ap.pagamento ? "Pago" : "Pendente"}
                   </span>
                 </div>
-                <p className="text-sm mt-2">{ap.proprietario}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Vencimento: {new Date(ap.dueDate).toLocaleDateString()}
-                </p>
+                <p className="text-sm mt-2">{ap.residenteNome || '-'}</p>
+                <p className="text-xs text-gray-500 mt-1">Vencimento: {new Date(ap.dueDate).toLocaleDateString()}</p>
               </div>
             ))}
           </div>
         )}
 
         {selectedAp && (
-          <DetalhesModal
-            apartamento={selectedAp}
-            onClose={() => setSelectedAp(null)}
-          />
+          <DetalhesModal apartamento={selectedAp} onClose={() => setSelectedAp(null)} />
         )}
       </main>
     </div>
   );
 }
+
