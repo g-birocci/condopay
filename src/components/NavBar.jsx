@@ -14,7 +14,7 @@ export default function NavBar() {
             Home
           </Link>
           <Link
-            href="/houses"
+            href="/apartamentos"
             className="text-sm text-gray-600 hover:text-gray-900"
           >
             Apartamentos

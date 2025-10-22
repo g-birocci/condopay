@@ -14,8 +14,22 @@ export default function UserBoletos() {
   const load = async () => {
     setError('');
     if (!apId) {
-      window.location.href = '/user';
-      return;
+      // Fallback de demo: pega o primeiro apartamento disponível
+      try {
+        const { data } = await API.get('/apartamentos');
+        if (Array.isArray(data) && data.length > 0) {
+          localStorage.setItem('userApId', data[0]._id);
+          localStorage.setItem('userApNumero', data[0].numeroAp || '');
+        } else {
+          setError('Nenhum apartamento cadastrado para demo. Crie um no admin.');
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        setError('Falha ao localizar apartamento para demo.');
+        setLoading(false);
+        return;
+      }
     }
     try {
       const { data } = await API.get(`/apartamentos/${apId}`);
@@ -105,4 +119,3 @@ export default function UserBoletos() {
     </div>
   );
 }
-
