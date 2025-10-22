@@ -1,6 +1,8 @@
-const express = require('express');
-const router = express.Router();
+// services/api.js (FRONTEND - Next.js)
+import axios from 'axios';
 
-// Aqui você vai adicionar suas rotas depois
+const API = axios.create({
+  baseURL: '/api'
+});
 
-module.exports = router;
+export default API;

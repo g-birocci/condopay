@@ -4,8 +4,8 @@ export default function Login() {
   const router = useRouter();
 
   const handleLogin = () => {
-    // Apenas navega para /houses (podes ligar autenticação depois)
-    router.push("/houses");
+    // Navega para o dashboard (você pode adicionar autenticação depois)
+    router.push("/dashboard");
   };
 
   return (
