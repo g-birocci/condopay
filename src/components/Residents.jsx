@@ -20,7 +20,6 @@ function StatusPill({ status }) {
 export default function Residents({ data }) {
   const router = useRouter();
 
-  // dados iguais ao print se nada vier por props
   const rows = useMemo(
     () =>
       Array.isArray(data) && data.length

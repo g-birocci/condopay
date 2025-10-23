@@ -223,7 +223,7 @@ export default function Dashboard() {
       </main>
 
       {showAddModal && (
-        <Modal>
+        <Modal onClose={() => setShowAddModal(false)}>
           <AddAp 
             onClose={() => setShowAddModal(false)} 
             onSuccess={() => loadApartamentos()} 
@@ -232,7 +232,7 @@ export default function Dashboard() {
       )}
 
       {selectedAp && (
-        <Modal>
+        <Modal onClose={() => setSelectedAp(null)}>
           <ApEditorModal
             apartamento={selectedAp}
             onClose={() => setSelectedAp(null)}
@@ -246,10 +246,22 @@ export default function Dashboard() {
   );
 }
 
-function Modal({ children }) {
+function Modal({ children, onClose }) {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') onClose?.();
+  };
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
-      {children}
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn"
+      onClick={onClose}
+      onKeyDown={handleKeyDown}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+    >
+      <div onClick={(e) => e.stopPropagation()} className="outline-none">
+        {children}
+      </div>
     </div>
   );
 }
@@ -283,7 +295,12 @@ function ApartamentosGrid({ apartamentos, onSelect, onNotify, showOnlyUnpaid }) 
       {apartamentos.map((ap) => (
         <div
           key={ap._id}
-          className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-5 hover:shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer"
+          onClick={() => onSelect?.(ap)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(ap); }}
+          role="button"
+          tabIndex={0}
+          title={`Abrir Apartamento ${ap.numeroAp}`}
+          className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-5 hover:shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
         >
           <div className="flex justify-between items-start">
             <div>

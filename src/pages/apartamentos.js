@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import NavBar from "@/components/NavBar";
+import ApEditorModal from "@/components/ApEditorModal";
 import API from "@/services/api";
 
 export default function Apartamentos() {
   const [apartamentos, setApartamentos] = useState([]);
   const [selectedAp, setSelectedAp] = useState(null);
+  const [editAp, setEditAp] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function Apartamentos() {
     }
   };
 
-  const DetalhesModal = ({ apartamento, onClose }) => (
+  const DetalhesModal = ({ apartamento, onClose, onEdit }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
         <div className="flex justify-between items-center mb-4">
@@ -93,7 +95,8 @@ export default function Apartamentos() {
             </div>
           )}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2 justify-between">
+            <button onClick={() => onEdit?.(apartamento)} className="px-3 py-2 bg-gray-100 text-gray-800 rounded border border-gray-200 hover:bg-gray-200">Editar</button>
             {!apartamento.pagamento && (
               <button onClick={() => pagar(apartamento)} className="px-3 py-2 bg-blue-600 text-white rounded">Pagar</button>
             )}
@@ -105,6 +108,26 @@ export default function Apartamentos() {
       </div>
     </div>
   );
+
+  const editarApartamento = async (dados) => {
+    try {
+      const payload = {
+        numeroAp: dados.numeroAp,
+        andar: dados.andar,
+        residenteNome: dados.residenteNome,
+        residenteEmail: dados.residenteEmail,
+        valor: dados.valor,
+        dueDate: new Date(dados.dueDate).toISOString(),
+      };
+      await API.put(`/apartamentos/${dados._id}`, payload);
+      alert("Apartamento atualizado com sucesso!");
+      await loadApartamentos();
+      setEditAp(null);
+    } catch (e) {
+      console.error("Erro ao atualizar apartamento:", e);
+      alert("Erro ao atualizar apartamento. Verifique o console.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,7 +169,32 @@ export default function Apartamentos() {
         )}
 
         {selectedAp && (
-          <DetalhesModal apartamento={selectedAp} onClose={() => setSelectedAp(null)} />
+          <DetalhesModal 
+            apartamento={selectedAp} 
+            onClose={() => setSelectedAp(null)} 
+            onEdit={(ap) => { setSelectedAp(null); setEditAp(ap); }}
+          />
+        )}
+
+        {editAp && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setEditAp(null)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setEditAp(null); }}
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+          >
+            <div onClick={(e) => e.stopPropagation()}>
+              <ApEditorModal
+                apartamento={editAp}
+                onClose={() => setEditAp(null)}
+                onSave={editarApartamento}
+                onPay={pagar}
+                onNotify={notificar}
+              />
+            </div>
+          </div>
         )}
       </main>
     </div>

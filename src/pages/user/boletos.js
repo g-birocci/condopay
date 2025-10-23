@@ -156,14 +156,14 @@ export default function UserBoletos() {
     const onAlert = (e) => {
       try { 
         const data = JSON.parse(e.data); 
-        addNotice(`🔔 Lembrete: Seu boleto do Ap ${data.numeroAp} está pendente!`, 'warning'); 
+        addNotice(`🔔 Lembrete: Prestação do Ap ${data.numeroAp} está pendente!`, 'warning'); 
       } catch {}
     };
     
     const onDueSoon = (e) => {
       try { 
         const data = JSON.parse(e.data); 
-        addNotice(`⚠️ Atenção: Seu boleto vence em breve (Ap ${data.numeroAp})`, 'warning'); 
+        addNotice(`⚠️ Atenção: Pagamento em falta (Ap ${data.numeroAp})`, 'warning'); 
       } catch {}
     };
     
@@ -208,7 +208,7 @@ export default function UserBoletos() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Meus Boletos
+            Pagamentos do Condomínio
           </h1>
           <p className="text-gray-600">Gerencie seus pagamentos de condomínio</p>
         </div>

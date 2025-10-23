@@ -65,7 +65,7 @@ const iniciarServidor = async () => {
               apartamentoId: ap._id,
               numeroAp: ap.numeroAp,
               dueDate: ap.dueDate,
-              message: 'Seu boleto vence em até 5 dias. Favor efetuar o pagamento caloteiro.'
+              message: ' Tem até 5 dias. Favor efetuar o pagamento caloteiro.'
             });
             await Apartamento.updateOne({ _id: ap._id }, { $set: { lastNotified: new Date() } });
           }

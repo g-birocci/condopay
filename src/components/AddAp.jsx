@@ -54,8 +54,19 @@ export default function AddAp({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow border border-gray-200 max-w-md">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Adicionar Apartamento</h2>
+    <div className="p-6 bg-white rounded-xl shadow border border-gray-200 max-w-md relative">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-gray-800">Adicionar Apartamento</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-gray-500 hover:text-gray-700"
+          aria-label="Fechar"
+          title="Fechar"
+        >
+          ×
+        </button>
+      </div>
 
       {success && (
         <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
@@ -150,15 +161,24 @@ export default function AddAp({ onClose, onSuccess }) {
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-2.5 px-4 rounded-lg font-medium text-white transition ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {loading ? "Salvando..." : "Adicionar Apartamento"}
-        </button>
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-white transition ${
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Salvando..." : "Adicionar"}
+          </button>
+        </div>
       </form>
     </div>
   );
