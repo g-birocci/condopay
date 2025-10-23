@@ -248,28 +248,16 @@ export default function Dashboard() {
                     name="status"
                     defaultValue={apartamentoEmEdicao.status}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
-                    required
                   >
-                    <option value="Pendente">Pendente</option>
                     <option value="Pago">Pago</option>
+                    <option value="Pendente">Pendente</option>
                   </select>
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={fecharModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
-                >
-                  Salvar
-                </button>
+              <div className="mt-6 flex justify-end gap-2">
+                <button type="button" onClick={fecharModal} className="px-4 py-2 rounded bg-gray-100">Cancelar</button>
+                <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white">Salvar</button>
               </div>
             </form>
           </div>
@@ -278,3 +266,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

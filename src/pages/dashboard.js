@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import NavBar from "@/components/NavBar";
+import AddAp from "@/components/AddAp";
 import API from "@/services/api";
+import ApEditorModal from "@/components/ApEditorModal";
+import RelatorioCharts from "@/components/RelatorioCharts";
 
 export default function Dashboard() {
   const [apartamentos, setApartamentos] = useState([]);
@@ -9,10 +12,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("apartamentos");
   const [showAddModal, setShowAddModal] = useState(false);
-
-  useEffect(() => {
-    loadApartamentos();
-  }, []);
 
   const loadApartamentos = async () => {
     try {
@@ -24,6 +23,16 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => { loadApartamentos(); }, []);
+
+  // SSE para admin: atualiza lista ao receber pagamentos
+  useEffect(() => {
+    const es = new EventSource('/api/events?role=admin');
+    const onPayment = () => { loadApartamentos(); };
+    es.addEventListener('payment', onPayment);
+    return () => { es.removeEventListener('payment', onPayment); es.close(); };
+  }, []);
 
   const pagar = async (ap) => {
     try {
@@ -38,20 +47,9 @@ export default function Dashboard() {
   const notificar = async (ap) => {
     try {
       await API.post(`/apartamentos/${ap._id}/notify`);
-      alert(`E-mail enviado para ${ap.residenteEmail || "morador"} (Ap ${ap.numeroAp}).`);
+      alert(`Notificação enviada para ${ap.residenteEmail || "morador"} (Ap ${ap.numeroAp}).`);
     } catch {
       alert("Falha ao enviar notificação.");
-    }
-  };
-
-  const criarApartamento = async (novo) => {
-    try {
-      await API.post("/apartamentos", novo);
-      alert("Apartamento criado com sucesso!");
-      await loadApartamentos();
-      setShowAddModal(false);
-    } catch {
-      alert("Erro ao criar apartamento.");
     }
   };
 
@@ -70,7 +68,7 @@ export default function Dashboard() {
       setSelectedAp(null);
     } catch (e) {
       console.error("Erro ao atualizar apartamento:", e);
-      alert("Erro ao atualizar apartamento. Verifica a consola.");
+      alert("Erro ao atualizar apartamento. Verifique o console.");
     }
   };
 
@@ -99,7 +97,7 @@ export default function Dashboard() {
                       : "hover:bg-gray-300 text-gray-700"
                   }`}
                 >
-                  🏠 Apartamentos
+                  Apartamentos
                 </button>
                 <button
                   onClick={() => setTab("relatorios")}
@@ -109,7 +107,7 @@ export default function Dashboard() {
                       : "hover:bg-gray-300 text-gray-700"
                   }`}
                 >
-                  📊 Relatórios
+                  Relatórios
                 </button>
               </div>
             </aside>
@@ -126,7 +124,7 @@ export default function Dashboard() {
                     className="p-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow transition-all hover:scale-105"
                     title="Adicionar Apartamento"
                   >
-                    <span className="text-2xl leading-none">＋</span>
+                    <span className="text-2xl leading-none">+</span>
                   </button>
                 )}
               </div>
@@ -135,9 +133,9 @@ export default function Dashboard() {
                 {loading ? (
                   <p className="text-gray-500">Carregando...</p>
                 ) : tab === "apartamentos" ? (
-                  <ApartamentosGrid apartamentos={apartamentos} onSelect={setSelectedAp} />
+                  <ApartamentosGrid apartamentos={apartamentos} onSelect={setSelectedAp} onNotify={notificar} />
                 ) : (
-                  <RelatorioSimples apartamentos={apartamentos} />
+                  <RelatorioCharts apartamentos={apartamentos} />
                 )}
               </div>
             </section>
@@ -147,13 +145,13 @@ export default function Dashboard() {
 
       {showAddModal && (
         <Modal>
-          <AddModal onClose={() => setShowAddModal(false)} onSave={criarApartamento} />
+          <AddAp onClose={() => setShowAddModal(false)} />
         </Modal>
       )}
 
       {selectedAp && (
         <Modal>
-          <EditarModal
+          <ApEditorModal
             apartamento={selectedAp}
             onClose={() => setSelectedAp(null)}
             onSave={editarApartamento}
@@ -174,7 +172,7 @@ function Modal({ children }) {
   );
 }
 
-function ApartamentosGrid({ apartamentos, onSelect }) {
+function ApartamentosGrid({ apartamentos, onSelect, onNotify }) {
   if (!apartamentos.length)
     return (
       <p className="text-center text-gray-500 py-6">
@@ -208,142 +206,31 @@ function ApartamentosGrid({ apartamentos, onSelect }) {
             </span>
           </div>
           <p className="text-sm mt-3 text-gray-700">
-            {ap.residenteNome || "—"}
+            {ap.residenteNome || "-"}
           </p>
           <p className="text-xs text-gray-500 mt-1">
             Vencimento: {new Date(ap.dueDate).toLocaleDateString()}
           </p>
+          {!ap.pagamento && (
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onNotify?.(ap); }}
+                className="px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 text-sm"
+              >
+                Notificar
+              </button>
+            </div>
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-function AddModal({ onClose, onSave }) {
-  return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">
-        Novo Apartamento
-      </h3>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const data = Object.fromEntries(new FormData(e.target));
-          onSave(data);
-        }}
-        className="space-y-4"
-      >
-        <Input name="numeroAp" placeholder="Número" required />
-        <Input name="andar" placeholder="Andar" required />
-        <Input name="residenteNome" placeholder="Nome do Morador" />
-        <Input name="residenteEmail" placeholder="Email" />
-        <Input name="dueDate" type="date" />
-        <div className="flex justify-end gap-2 pt-3">
-          <Button secondary onClick={onClose}>Cancelar</Button>
-          <Button primary type="submit">Salvar</Button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
 function EditarModal({ apartamento, onClose, onSave, onPay, onNotify }) {
-  return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">
-        Editar Apartamento
-      </h3>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const data = Object.fromEntries(new FormData(e.target));
-          onSave({ ...apartamento, ...data });
-        }}
-        className="space-y-4"
-      >
-        <Input name="numeroAp" defaultValue={apartamento.numeroAp} required />
-        <Input name="andar" defaultValue={apartamento.andar} required />
-        <Input name="residenteNome" defaultValue={apartamento.residenteNome} />
-        <Input name="residenteEmail" defaultValue={apartamento.residenteEmail} />
-        <Input
-          name="dueDate"
-          type="date"
-          defaultValue={
-            apartamento.dueDate
-              ? new Date(apartamento.dueDate).toISOString().split("T")[0]
-              : ""
-          }
-        />
-        <div className="flex flex-wrap gap-2 pt-3">
-          <Button primary type="submit">Salvar</Button>
-          <Button success onClick={() => onPay(apartamento)}>Pago</Button>
-          <Button warning onClick={() => onNotify(apartamento)}>Notificar</Button>
-          <Button secondary onClick={onClose}>Fechar</Button>
-        </div>
-      </form>
-    </div>
-  );
+  return null;
 }
 
-function RelatorioSimples({ apartamentos }) {
-  const pagos = apartamentos.filter((a) => a.pagamento).length;
-  const pendentes = apartamentos.length - pagos;
-  const total = apartamentos.length || 1;
-  const pctPagos = ((pagos / total) * 100).toFixed(1);
-  const pctPendentes = ((pendentes / total) * 100).toFixed(1);
-
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800">
-        Evolução de Pagamentos
-      </h3>
-      <Progress label={`Pagos (${pagos})`} color="green" percent={pctPagos} />
-      <Progress label={`Pendentes (${pendentes})`} color="red" percent={pctPendentes} />
-    </div>
-  );
-}
-
-function Input(props) {
-  return (
-    <input
-      {...props}
-      className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition"
-    />
-  );
-}
-
-function Button({ children, primary, secondary, success, warning, ...rest }) {
-  const base = "px-4 py-2 rounded-xl font-medium text-sm transition shadow-sm";
-  const colors = primary
-    ? "bg-blue-600 text-white hover:bg-blue-700"
-    : secondary
-    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-    : success
-    ? "bg-green-600 text-white hover:bg-green-700"
-    : warning
-    ? "bg-yellow-500 text-white hover:bg-yellow-600"
-    : "";
-  return (
-    <button {...rest} className={`${base} ${colors}`}>
-      {children}
-    </button>
-  );
-}
-
-function Progress({ label, color, percent }) {
-  const barColor = color === "green" ? "bg-green-500" : "bg-red-500";
-  return (
-    <div>
-      <div className="flex justify-between text-sm mb-1">
-        <span>{label}</span>
-        <span>{percent}%</span>
-      </div>
-      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-3 ${barColor} rounded-full transition-all`}
-          style={{ width: `${percent}%` }}
-        ></div>
-      </div>
-    </div>
-  );
+function RelatorioSimples() {
+  return <div className="text-gray-600">Relatórios simples (em construção)</div>;
 }

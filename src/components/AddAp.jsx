@@ -114,7 +114,7 @@ export default function AddAp({ onClose }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Valor do Boleto (R$)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Valor do Boleto (€)</label>
           <input
             type="number"
             min="0"

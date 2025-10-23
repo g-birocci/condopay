@@ -7,9 +7,18 @@ export default function UserBoletos() {
   const [ap, setAp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notices, setNotices] = useState([]);
 
-  const apId = typeof window !== 'undefined' ? localStorage.getItem('userApId') : null;
-  const apNumero = typeof window !== 'undefined' ? localStorage.getItem('userApNumero') : '';
+  const [apId, setApId] = useState(null);
+  const [apNumero, setApNumero] = useState('');
+  const [apEmail, setApEmail] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setApId(localStorage.getItem('userApId'));
+    setApNumero(localStorage.getItem('userApNumero') || '');
+    setApEmail(localStorage.getItem('userApEmail') || '');
+  }, []);
 
   const load = async () => {
     setError('');
@@ -20,6 +29,8 @@ export default function UserBoletos() {
         if (Array.isArray(data) && data.length > 0) {
           localStorage.setItem('userApId', data[0]._id);
           localStorage.setItem('userApNumero', data[0].numeroAp || '');
+          setApId(data[0]._id);
+          setApNumero(data[0].numeroAp || '');
         } else {
           setError('Nenhum apartamento cadastrado para demo. Crie um no admin.');
           setLoading(false);
@@ -32,7 +43,8 @@ export default function UserBoletos() {
       }
     }
     try {
-      const { data } = await API.get(`/apartamentos/${apId}`);
+      const id = apId || (typeof window !== 'undefined' ? localStorage.getItem('userApId') : null);
+      const { data } = await API.get(`/apartamentos/${id}`);
       setAp(data);
     } catch (e) {
       setError('Falha ao carregar boletos.');
@@ -41,7 +53,35 @@ export default function UserBoletos() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (apId !== null) { load(); } }, [apId]);
+
+  // SSE: escuta notificações do admin e recibos de pagamento
+  useEffect(() => {
+    if (!apEmail) return; // precisa do email
+    const es = new EventSource(`/api/events?role=user&email=${encodeURIComponent(apEmail)}`);
+    const addNotice = (msg) => setNotices((arr) => [{ id: Date.now()+Math.random(), msg }, ...arr].slice(0, 5));
+
+    const onAlert = (e) => {
+      try { const data = JSON.parse(e.data); addNotice(`Admin notificou sobre boleto do Ap ${data.numeroAp}`); } catch {}
+    };
+    const onDueSoon = (e) => {
+      try { const data = JSON.parse(e.data); addNotice(`Seu boleto vence em breve (Ap ${data.numeroAp})`); } catch {}
+    };
+    const onReceipt = (e) => {
+      try { const data = JSON.parse(e.data); addNotice(`Pagamento confirmado! Valor R$ ${Number(data.amount||0).toFixed(2)}`); } catch {}
+    };
+
+    es.addEventListener('boleto_alert', onAlert);
+    es.addEventListener('boleto_due_soon', onDueSoon);
+    es.addEventListener('payment_receipt', onReceipt);
+    es.addEventListener('error', () => {});
+    return () => {
+      es.removeEventListener('boleto_alert', onAlert);
+      es.removeEventListener('boleto_due_soon', onDueSoon);
+      es.removeEventListener('payment_receipt', onReceipt);
+      es.close();
+    };
+  }, [apEmail]);
 
   const pagar = async () => {
     if (!ap?._id) return;
@@ -65,6 +105,9 @@ export default function UserBoletos() {
         <h1 className="text-2xl font-semibold mb-6">Meus Boletos</h1>
 
         {error && <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">{error}</div>}
+        {notices.map(n => (
+          <div key={n.id} className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">{n.msg}</div>
+        ))}
         {loading && <p>Carregando...</p>}
 
         {ap && (

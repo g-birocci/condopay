@@ -248,42 +248,47 @@ router.post('/:id/notify', async (req, res) => {
         apartamentoId: apartamento._id,
         numeroAp: apartamento.numeroAp,
         dueDate: apartamento.dueDate,
-        message: 'Seu boleto está em atraso. Por favor, efetue o pagamento.'
       });
     }
 
-    res.json({ message: 'Notificação enviada', lastNotified: apartamento.lastNotified });
+    notifyAdmins('admin_log', { action: 'notify', id: apartamento._id });
+    res.json({ ok: true });
   } catch (error) {
-    console.error('Erro ao notificar:', error);
-    res.status(500).json({ error: 'Erro ao enviar notificação' });
+    console.error('Erro ao notificar morador:', error);
+    res.status(500).json({ error: 'Erro ao notificar morador' });
   }
 });
 
-// POST /api/apartamentos/:id/pay - Registra pagamento (simulação do usuário)
+// POST /api/apartamentos/:id/pay - Registra pagamento (demo)
 router.post('/:id/pay', async (req, res) => {
   try {
-    const { amount } = req.body;
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ error: 'Valor do pagamento é obrigatório e deve ser positivo' });
-    }
-
+    const { amount = 0, note = 'Pagamento via demo' } = req.body || {};
     const apartamento = await Apartamento.findById(req.params.id);
     if (!apartamento) {
       return res.status(404).json({ error: 'Apartamento não encontrado' });
     }
 
+    // Idempotente simples: se já pago, apenas retorna
+    if (apartamento.pagamento) {
+      return res.json(apartamento);
+    }
+
     apartamento.pagamento = true;
     apartamento.dataPagamento = new Date();
-    apartamento.history.push({ amount, date: new Date(), note: 'Pagamento registrado' });
-
+    apartamento.history = Array.isArray(apartamento.history) ? apartamento.history : [];
+    apartamento.history.push({ amount: Number(amount) || 0, date: new Date(), note });
     await apartamento.save();
 
-    notifyAdmins('payment_confirmed', {
-      apartamentoId: apartamento._id,
-      numeroAp: apartamento.numeroAp,
-      amount,
-      dataPagamento: apartamento.dataPagamento,
-    });
+    // Notifica admin e usuário por SSE
+    notifyAdmins('payment', { id: apartamento._id, numeroAp: apartamento.numeroAp, amount: Number(amount) || 0 });
+    if (apartamento.residenteEmail) {
+      notifyUser(String(apartamento.residenteEmail).toLowerCase(), 'payment_receipt', {
+        apartamentoId: apartamento._id,
+        numeroAp: apartamento.numeroAp,
+        amount: Number(amount) || 0,
+        paidAt: apartamento.dataPagamento,
+      });
+    }
 
     res.json(apartamento);
   } catch (error) {
@@ -293,4 +298,3 @@ router.post('/:id/pay', async (req, res) => {
 });
 
 module.exports = router;
-

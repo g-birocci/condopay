@@ -74,12 +74,10 @@ export default function Apartamentos() {
             <p className="font-medium">{new Date(apartamento.dueDate).toLocaleDateString()}</p>
           </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Status</p>
-            <span className={`inline-block px-2 py-1 rounded-full text-sm ${apartamento.pagamento ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-              {apartamento.pagamento ? "Pago" : "Pendente"}
-            </span>
-          </div>
+          <div className="text-sm text-gray-500">Status</div>
+          <span className={`inline-block px-2 py-1 rounded-full text-sm ${apartamento.pagamento ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+            {apartamento.pagamento ? "Pago" : "Pendente"}
+          </span>
 
           {apartamento.history && apartamento.history.length > 0 && (
             <div>

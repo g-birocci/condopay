@@ -4,4 +4,5 @@ const ResidentSchema = new mongoose.Schema({
   unit: String,
   status: { type: String, enum: ['Paid', 'Overdue'], default: 'Paid' },
 })
-module.exports = mongoose.model('Resident', ResidentSchema)
+module.exports = mongoose.model('Resident', ResidentSchema)
+
