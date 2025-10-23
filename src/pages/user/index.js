@@ -112,7 +112,6 @@ export default function UserLogin() {
                 Problemas para acessar? Entre em contato com a administração
               </p>
             </div>
-          </div>
         </div>
       </main>
     </div>
