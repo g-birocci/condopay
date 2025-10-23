@@ -75,7 +75,6 @@ export default function Residents({ data }) {
         </div>
       </div>
 
-      {/* Espaço inferior para manter o mesmo respiro do print */}
       <div className="pb-4" />
     </section>
   );

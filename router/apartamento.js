@@ -137,6 +137,72 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT /api/apartamentos/:id - Atualiza campos do apartamento
+router.put('/:id', async (req, res) => {
+  try {
+    const allowed = [
+      'numeroAp',
+      'andar',
+      'residenteNome',
+      'residenteEmail',
+      'valor',
+      'dueDate',
+      'pagamento',
+    ];
+
+    const payload = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) payload[key] = req.body[key];
+    }
+
+    if (payload.andar !== undefined) {
+      const n = Number(payload.andar);
+      if (!Number.isFinite(n)) {
+        return res.status(400).json({ error: 'andar deve ser número' });
+      }
+      payload.andar = n;
+    }
+
+    if (payload.valor !== undefined) {
+      const v = Number(payload.valor);
+      if (!Number.isFinite(v)) {
+        return res.status(400).json({ error: 'valor deve ser número' });
+      }
+      payload.valor = v;
+    }
+
+    if (payload.residenteEmail !== undefined) {
+      payload.residenteEmail = String(payload.residenteEmail).trim().toLowerCase();
+    }
+
+    if (payload.dueDate !== undefined) {
+      const d = new Date(payload.dueDate);
+      if (isNaN(d.getTime())) {
+        return res.status(400).json({ error: 'dueDate inválida' });
+      }
+      payload.dueDate = d;
+    }
+
+    const updated = await Apartamento.findByIdAndUpdate(
+      req.params.id,
+      { $set: payload },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Apartamento não encontrado' });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    console.error('Erro ao atualizar apartamento:', error);
+    if (error && error.code === 11000) {
+      return res.status(409).json({ error: 'numeroAp já cadastrado' });
+    }
+    return res.status(500).json({ error: 'Erro ao atualizar apartamento' });
+  }
+});
+
 // GET /api/apartamentos/pendentes/list - Vencidos e não pagos
 router.get('/pendentes/list', async (_req, res) => {
   try {

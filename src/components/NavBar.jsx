@@ -8,21 +8,6 @@ export default function NavBar() {
           <img src="/logo.png" alt="CondoPay logo" className="w-12 h-8" />
           <span className="font-semibold text-lg">CondoPay</span>
         </div>
-
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-            Home
-          </Link>
-          <Link
-            href="/apartamentos"
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            Apartamentos
-          </Link>
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-            Relatórios
-          </Link>
-        </div>
       </div>
     </nav>
   );
