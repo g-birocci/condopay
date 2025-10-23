@@ -41,28 +41,23 @@ export default function UserLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <Head>
         <title>Área do Morador • CondoPay</title>
       </Head>
       <UserNavBar apLabel={numeroAp ? `Ap ${numeroAp}` : 'Meu Apartamento'} />
 
       <main className="max-w-md mx-auto px-4 py-12">
-        <div className="bg-white/80 backdrop-blur-md border border-white/20 rounded-3xl shadow-2xl p-8 relative overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute -top-10 -right-10 w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20"></div>
-          <div className="absolute -bottom-8 -left-8 w-16 h-16 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-full opacity-20"></div>
-          
-          <div className="relative z-10">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">🏠</span>
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                Bem-vindo de volta!
-              </h1>
-              <p className="text-gray-600 text-sm">Acesse sua área do morador</p>
+        <div className="bg-white border rounded-2xl shadow-sm p-8">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl">🏠</span>
             </div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              Bem-vindo de volta!
+            </h1>
+            <p className="text-gray-600 text-sm">Acesse sua área do morador</p>
+          </div>
 
             {error && (
               <div className="mb-6 p-4 text-sm bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-2">
@@ -80,7 +75,7 @@ export default function UserLogin() {
                 <input
                   value={numeroAp}
                   onChange={(e) => setNumeroAp(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 mt-1 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white/50 backdrop-blur-sm text-center text-2xl font-bold"
+                  className="w-full border rounded-xl px-4 py-3 mt-1 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 text-center text-2xl font-bold"
                   placeholder="Ex: 101"
                   required
                 />
@@ -92,10 +87,10 @@ export default function UserLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full rounded-2xl text-white py-4 font-semibold text-lg transition-all duration-200 transform ${
+                className={`w-full rounded-xl text-white py-4 font-semibold text-lg transition-all duration-200 ${
                   loading 
                     ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 hover:shadow-xl active:scale-95'
+                    : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
                 {loading ? (

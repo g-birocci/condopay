@@ -25,10 +25,10 @@ app.use('/api/apartamentos', apartamentosRouter);
 
 // SSE: Eventos em tempo real
 app.get('/api/events', (req, res) => {
-  const { role, email } = req.query;
+  const { role, apId } = req.query;
   if (role === 'admin') return subscribeAdmin(res);
-  if (!email) return res.status(400).json({ error: 'email obrigatório' });
-  return subscribeUser(String(email).toLowerCase(), res);
+  if (!apId) return res.status(400).json({ error: 'apId obrigatório' });
+  return subscribeUser(String(apId), res);
 });
 
 // Roteamento do Next.js (deve ser o último)
@@ -60,14 +60,13 @@ const iniciarServidor = async () => {
           const last = ap.lastNotified ? new Date(ap.lastNotified) : null;
           const twentyHrsAgo = new Date(Date.now() - 20 * 60 * 60 * 1000);
           if (!last || last < twentyHrsAgo) {
-            if (ap.residenteEmail) {
-              notifyUser(String(ap.residenteEmail).toLowerCase(), 'boleto_due_soon', {
-                apartamentoId: ap._id,
-                numeroAp: ap.numeroAp,
-                dueDate: ap.dueDate,
-                message: 'Seu boleto vence em até 5 dias. Favor efetuar o pagamento caloteiro.'
-              });
-            }
+            // Notifica por apId (mais confiável que email)
+            notifyUser(String(ap._id), 'boleto_due_soon', {
+              apartamentoId: ap._id,
+              numeroAp: ap.numeroAp,
+              dueDate: ap.dueDate,
+              message: 'Seu boleto vence em até 5 dias. Favor efetuar o pagamento caloteiro.'
+            });
             await Apartamento.updateOne({ _id: ap._id }, { $set: { lastNotified: new Date() } });
           }
         }

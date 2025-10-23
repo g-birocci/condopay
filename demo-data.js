@@ -3,7 +3,7 @@
 
 export const demoApartamentos = [
   {
-    _id: "demo_ap_101",
+    _id: "507f1f77bcf86cd799439011", // ID MongoDB válido
     numeroAp: "101",
     andar: "1",
     residenteNome: "João Silva",
@@ -14,7 +14,7 @@ export const demoApartamentos = [
     lastNotified: null
   },
   {
-    _id: "demo_ap_205",
+    _id: "507f1f77bcf86cd799439012", // ID MongoDB válido
     numeroAp: "205", 
     andar: "2",
     residenteNome: "Maria Santos",
@@ -25,7 +25,7 @@ export const demoApartamentos = [
     lastNotified: null
   },
   {
-    _id: "demo_ap_310",
+    _id: "507f1f77bcf86cd799439013", // ID MongoDB válido
     numeroAp: "310",
     andar: "3", 
     residenteNome: "Pedro Costa",
@@ -36,7 +36,7 @@ export const demoApartamentos = [
     lastNotified: null
   },
   {
-    _id: "demo_ap_412",
+    _id: "507f1f77bcf86cd799439014", // ID MongoDB válido
     numeroAp: "412",
     andar: "4",
     residenteNome: "Ana Oliveira", 
@@ -47,14 +47,14 @@ export const demoApartamentos = [
     lastNotified: null
   },
   {
-    _id: "demo_ap_501",
-    numeroAp: "501",
+    _id: "507f1f77bcf86cd799439015", // ID MongoDB válido
+    numeroAp: "500",
     andar: "5",
     residenteNome: "Carlos Ferreira",
     residenteEmail: "carlos.ferreira@email.com", 
     dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 dias no futuro
     valor: 500.00,
-    pagamento: true, // Já pago - NÃO pode notificar
+    pagamento: false, // Boleto em aberto - pode notificar (mudei para false para teste)
     lastNotified: null
   }
 ];

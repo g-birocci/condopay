@@ -243,13 +243,12 @@ router.post('/:id/notify', async (req, res) => {
     apartamento.lastNotified = new Date();
     await apartamento.save();
 
-    if (apartamento.residenteEmail) {
-      notifyUser(String(apartamento.residenteEmail).toLowerCase(), 'boleto_alert', {
-        apartamentoId: apartamento._id,
-        numeroAp: apartamento.numeroAp,
-        dueDate: apartamento.dueDate,
-      });
-    }
+    // Notifica usuário por apId (mais confiável que email)
+    notifyUser(String(apartamento._id), 'boleto_alert', {
+      apartamentoId: apartamento._id,
+      numeroAp: apartamento.numeroAp,
+      dueDate: apartamento.dueDate,
+    });
 
     notifyAdmins('admin_log', { action: 'notify', id: apartamento._id });
     res.json({ ok: true });
@@ -281,14 +280,12 @@ router.post('/:id/pay', async (req, res) => {
 
     // Notifica admin e usuário por SSE
     notifyAdmins('payment', { id: apartamento._id, numeroAp: apartamento.numeroAp, amount: Number(amount) || 0 });
-    if (apartamento.residenteEmail) {
-      notifyUser(String(apartamento.residenteEmail).toLowerCase(), 'payment_receipt', {
-        apartamentoId: apartamento._id,
-        numeroAp: apartamento.numeroAp,
-        amount: Number(amount) || 0,
-        paidAt: apartamento.dataPagamento,
-      });
-    }
+    notifyUser(String(apartamento._id), 'payment_receipt', {
+      apartamentoId: apartamento._id,
+      numeroAp: apartamento.numeroAp,
+      amount: Number(amount) || 0,
+      paidAt: apartamento.dataPagamento,
+    });
 
     res.json(apartamento);
   } catch (error) {

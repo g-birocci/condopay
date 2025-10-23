@@ -105,9 +105,9 @@ export default function UserBoletos() {
 
   // SSE: escuta notificações do admin e recibos de pagamento
   useEffect(() => {
-    if (!apEmail) return; // precisa do email
+    if (!apId) return; // precisa do apId
     
-    const es = new EventSource(`/api/events?role=user&email=${encodeURIComponent(apEmail)}`);
+    const es = new EventSource(`/api/events?role=user&apId=${encodeURIComponent(apId)}`);
     
     const addNotice = (msg, type = 'info') => {
       const newNotice = { 
@@ -124,7 +124,7 @@ export default function UserBoletos() {
 
     const showNotification = (notice) => {
       const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 transform translate-x-full transition-transform duration-300';
+      notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
       notification.innerHTML = `
         <div class="flex items-center gap-3">
           <span class="text-2xl">🔔</span>
@@ -185,7 +185,7 @@ export default function UserBoletos() {
       es.removeEventListener('payment_receipt', onReceipt);
       es.close();
     };
-  }, [apEmail]);
+  }, [apId]);
 
   const pagar = async () => {
     if (!ap?._id) return;
@@ -199,7 +199,7 @@ export default function UserBoletos() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <Head>
         <title>Meus Boletos • CondoPay</title>
       </Head>
@@ -207,7 +207,7 @@ export default function UserBoletos() {
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
             Meus Boletos
           </h1>
           <p className="text-gray-600">Gerencie seus pagamentos de condomínio</p>
@@ -222,17 +222,14 @@ export default function UserBoletos() {
         )}
         
         {notices.map(n => (
-          <div key={n.id} className={`mb-4 p-4 rounded-2xl flex items-center gap-3 shadow-sm ${
+          <div key={n.id} className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
             n.type === 'warning' 
-              ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 text-yellow-800'
+              ? 'bg-yellow-100 text-yellow-800'
               : n.type === 'success'
-              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800'
-              : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-800'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-blue-100 text-blue-800'
           }`}>
-            <span className={`text-xl ${
-              n.type === 'warning' ? 'text-yellow-600' : 
-              n.type === 'success' ? 'text-green-600' : 'text-blue-600'
-            }`}>
+            <span className="text-xl">
               {n.type === 'warning' ? '🔔' : n.type === 'success' ? '✅' : 'ℹ️'}
             </span>
             <div className="flex-1">
@@ -256,102 +253,46 @@ export default function UserBoletos() {
         {ap && (
           <div className="space-y-8">
             {/* Main Boleto Card */}
-            <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
-              {/* Decorative elements */}
-              <div className="absolute -top-10 -right-10 w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-10"></div>
-              <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-full opacity-10"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <span className="text-white text-2xl">🏠</span>
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-800">Apartamento {ap.numeroAp}</h2>
-                      <p className="text-gray-600">Condomínio Mensal</p>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500 mb-1">Vencimento</div>
-                    <div className="text-lg font-semibold text-gray-800">
-                      {new Date(ap.dueDate).toLocaleDateString('pt-BR')}
-                    </div>
-                  </div>
+            <div className="bg-white rounded-xl shadow-sm p-5 border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-gray-500">Apartamento</div>
+                  <div className="font-medium">{ap.numeroAp}</div>
                 </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">Vencimento</div>
+                  <div className="font-medium">{new Date(ap.dueDate).toLocaleDateString()}</div>
+                </div>
+              </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">Valor Total</div>
-                      <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                        R$ {(ap.valor || 0).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    {ap.pagamento ? (
-                      <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl border border-green-200">
-                        <span className="text-green-600 text-2xl">✅</span>
-                        <div>
-                          <div className="text-green-800 font-semibold">Pago</div>
-                          <div className="text-green-600 text-sm">Pagamento confirmado</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={pagar} 
-                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold text-lg rounded-2xl hover:from-blue-700 hover:to-purple-700 hover:scale-105 hover:shadow-xl transition-all duration-200 transform active:scale-95 flex items-center gap-3"
-                      >
-                        <span>💳</span>
-                        Pagar Agora
-                      </button>
-                    )}
-                  </div>
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-gray-500">Valor</div>
+                  <div className="text-lg font-semibold text-blue-600">R$ {(ap.valor || 0).toFixed(2)}</div>
+                </div>
+                <div>
+                  {ap.pagamento ? (
+                    <span className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-700">Pago</span>
+                  ) : (
+                    <button onClick={pagar} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Pagar</button>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* History Card */}
-            <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/20 p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
-                  <span className="text-gray-600 text-xl">📊</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">Histórico de Pagamentos</h2>
-              </div>
-              
-              {(!ap.history || ap.history.length === 0) ? (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <span className="text-gray-400 text-3xl">📝</span>
-                  </div>
-                  <p className="text-gray-500 text-lg">Nenhum pagamento registrado ainda</p>
-                  <p className="text-gray-400 text-sm mt-2">Seus pagamentos aparecerão aqui</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
+            <div className="bg-white rounded-xl shadow-sm p-5 border">
+              <h2 className="font-medium mb-3">Histórico</h2>
+              {(!ap.history || ap.history.length === 0) && (
+                <p className="text-sm text-gray-500">Sem pagamentos registrados.</p>
+              )}
+              {ap.history && ap.history.length > 0 && (
+                <div className="space-y-2">
                   {ap.history.map((h, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl border border-gray-100 hover:shadow-md transition-all duration-200">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                          <span className="text-green-600">✅</span>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-800">
-                            {new Date(h.date).toLocaleDateString('pt-BR')}
-                          </div>
-                          <div className="text-sm text-gray-500">{h.note || 'Pagamento de condomínio'}</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-green-600 text-lg">
-                          R$ {typeof h.amount === 'number' ? h.amount.toFixed(2) : h.amount}
-                        </div>
-                        <div className="text-xs text-gray-500">Confirmado</div>
-                      </div>
+                    <div key={i} className="flex items-center justify-between text-sm bg-gray-50 rounded p-2">
+                      <span>{new Date(h.date).toLocaleDateString()}</span>
+                      <span>R$ {typeof h.amount === 'number' ? h.amount.toFixed(2) : h.amount}</span>
+                      <span className="text-gray-500">{h.note}</span>
                     </div>
                   ))}
                 </div>

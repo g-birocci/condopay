@@ -55,7 +55,7 @@ export default function Dashboard() {
       
       // Feedback visual melhorado
       const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 transform translate-x-full transition-transform duration-300';
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
       notification.innerHTML = `
         <div class="flex items-center gap-3">
           <span class="text-2xl">🔔</span>
@@ -84,7 +84,7 @@ export default function Dashboard() {
     } catch (error) {
       // Feedback de erro
       const errorNotification = document.createElement('div');
-      errorNotification.className = 'fixed top-4 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 transform translate-x-full transition-transform duration-300';
+      errorNotification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
       errorNotification.innerHTML = `
         <div class="flex items-center gap-3">
           <span class="text-2xl">❌</span>
@@ -275,86 +275,41 @@ function ApartamentosGrid({ apartamentos, onSelect, onNotify, showOnlyUnpaid }) 
       {apartamentos.map((ap) => (
         <div
           key={ap._id}
-          className="bg-white/80 backdrop-blur-md border border-white/20 rounded-3xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer relative overflow-hidden"
+          className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-5 hover:shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer"
         >
-          {/* Decorative elements */}
-          <div className="absolute -top-6 -right-6 w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-10"></div>
-          
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg">🏠</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-800 text-lg">
-                    Ap {ap.numeroAp}
-                  </h3>
-                  <p className="text-sm text-gray-500">Andar {ap.andar}</p>
-                </div>
-              </div>
-              
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  ap.pagamento
-                    ? "bg-green-100 text-green-700 border border-green-200"
-                    : "bg-red-100 text-red-700 border border-red-200"
-                }`}
-              >
-                {ap.pagamento ? "✅ Pago" : "⚠️ Pendente"}
-              </span>
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-medium text-gray-800">
+                Apartamento {ap.numeroAp}
+              </h3>
+              <p className="text-sm text-gray-500">Andar {ap.andar}</p>
             </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">👤</span>
-                <span className="text-sm text-gray-700">
-                  {ap.residenteNome || "Morador não informado"}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">📅</span>
-                <span className="text-sm text-gray-700">
-                  Vence em {new Date(ap.dueDate).toLocaleDateString('pt-BR')}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">💰</span>
-                <span className="text-sm font-semibold text-blue-600">
-                  R$ {(ap.valor || 0).toFixed(2)}
-                </span>
-              </div>
-            </div>
-            
-            {!ap.pagamento ? (
-              <div className="mt-6 flex gap-3">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onSelect(ap); }}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
-                >
-                  📝 Editar
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onNotify?.(ap); }}
-                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 text-sm font-medium flex items-center gap-2"
-                >
-                  <span>🔔</span>
-                  Notificar
-                </button>
-              </div>
-            ) : (
-              <div className="mt-6">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onSelect(ap); }}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all duration-200 text-sm font-medium"
-                >
-                  📝 Ver Detalhes
-                </button>
-              </div>
-            )}
+            <span
+              className={`px-2 py-1 rounded-full text-xs ${
+                ap.pagamento
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {ap.pagamento ? "Pago" : "Pendente"}
+            </span>
           </div>
+          <p className="text-sm mt-3 text-gray-700">
+            {ap.residenteNome || "-"}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Vencimento: {new Date(ap.dueDate).toLocaleDateString()}
+          </p>
+          {!ap.pagamento && (
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onNotify?.(ap); }}
+                className="px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 text-sm"
+              >
+                Notificar
+              </button>
+            </div>
+          )}
         </div>
       ))}
     </div>
