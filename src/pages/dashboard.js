@@ -43,7 +43,8 @@ export default function Dashboard() {
     try {
       await API.post(`/apartamentos/${ap._id}/pay`, { amount: ap.valor || 0.01 });
       alert(`Pagamento confirmado para Ap ${ap.numeroAp}.`);
-      await loadApartamentos();
+      await loadApartamentos(); // Recarrega a lista
+      setSelectedAp(null); // Fecha o modal
     } catch {
       alert("Falha ao registrar pagamento.");
     }
@@ -81,6 +82,9 @@ export default function Dashboard() {
         }, 300);
       }, 4000);
       
+      // Recarrega a lista para atualizar lastNotified
+      await loadApartamentos();
+      
     } catch (error) {
       // Feedback de erro
       const errorNotification = document.createElement('div');
@@ -117,11 +121,12 @@ export default function Dashboard() {
         andar: dados.andar,
         residenteNome: dados.residenteNome,
         residenteEmail: dados.residenteEmail,
+        valor: dados.valor,
         dueDate: new Date(dados.dueDate).toISOString(),
       };
       await API.put(`/apartamentos/${dados._id}`, payload);
       alert("Apartamento atualizado com sucesso!");
-      await loadApartamentos();
+      await loadApartamentos(); // Recarrega a lista
       setSelectedAp(null);
     } catch (e) {
       console.error("Erro ao atualizar apartamento:", e);
@@ -219,7 +224,10 @@ export default function Dashboard() {
 
       {showAddModal && (
         <Modal>
-          <AddAp onClose={() => setShowAddModal(false)} />
+          <AddAp 
+            onClose={() => setShowAddModal(false)} 
+            onSuccess={() => loadApartamentos()} 
+          />
         </Modal>
       )}
 

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import API from "../services/api";
 
-export default function AddAp({ onClose }) {
+export default function AddAp({ onClose, onSuccess }) {
   const [numeroAp, setNumeroAp] = useState("");
   const [andar, setAndar] = useState("");
   const [pagamento, setPagamento] = useState(false);
@@ -32,6 +32,7 @@ export default function AddAp({ onClose }) {
       });
 
       setSuccess(true);
+      onSuccess?.(); // Chama callback para atualizar a lista
       setTimeout(() => {
         onClose?.();
       }, 1200);

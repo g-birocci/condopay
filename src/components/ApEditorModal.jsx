@@ -5,6 +5,7 @@ export default function ApEditorModal({ apartamento, onClose, onSave, onPay, onN
   const [andar, setAndar] = useState(apartamento?.andar ?? "");
   const [residenteNome, setResidenteNome] = useState(apartamento?.residenteNome || "");
   const [residenteEmail, setResidenteEmail] = useState(apartamento?.residenteEmail || "");
+  const [valor, setValor] = useState(apartamento?.valor || "");
   const [dueDate, setDueDate] = useState(() => {
     try {
       return apartamento?.dueDate ? new Date(apartamento.dueDate).toISOString().slice(0, 10) : "";
@@ -23,6 +24,7 @@ export default function ApEditorModal({ apartamento, onClose, onSave, onPay, onN
         andar: Number(andar),
         residenteNome,
         residenteEmail,
+        valor: Number(valor) || 0,
         dueDate,
       });
     } finally {
@@ -54,6 +56,10 @@ export default function ApEditorModal({ apartamento, onClose, onSave, onPay, onN
         <div>
           <label className="block text-sm text-gray-700 mb-1">E-mail</label>
           <input type="email" value={residenteEmail} onChange={(e)=>setResidenteEmail(e.target.value)} className="w-full p-2.5 border rounded-lg" />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700 mb-1">Valor do Boleto (R$)</label>
+          <input type="number" step="0.01" min="0" value={valor} onChange={(e)=>setValor(e.target.value)} className="w-full p-2.5 border rounded-lg" placeholder="Ex: 450.00" />
         </div>
         <div>
           <label className="block text-sm text-gray-700 mb-1">Vencimento</label>
