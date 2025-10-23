@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("apartamentos");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showOnlyUnpaid, setShowOnlyUnpaid] = useState(false);
 
   const loadApartamentos = async () => {
     try {
@@ -19,6 +20,10 @@ export default function Dashboard() {
       setApartamentos(response.data);
     } catch (error) {
       console.error("Erro ao carregar apartamentos:", error);
+      // Se não conseguir carregar dados reais, usa dados de demonstração
+      console.log("Usando dados de demonstração...");
+      const { demoApartamentos } = await import('../../demo-data');
+      setApartamentos(demoApartamentos);
     } finally {
       setLoading(false);
     }
@@ -47,9 +52,61 @@ export default function Dashboard() {
   const notificar = async (ap) => {
     try {
       await API.post(`/apartamentos/${ap._id}/notify`);
-      alert(`Notificação enviada para ${ap.residenteEmail || "morador"} (Ap ${ap.numeroAp}).`);
-    } catch {
-      alert("Falha ao enviar notificação.");
+      
+      // Feedback visual melhorado
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 transform translate-x-full transition-transform duration-300';
+      notification.innerHTML = `
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🔔</span>
+          <div>
+            <div class="font-semibold">Notificação Enviada!</div>
+            <div class="text-sm opacity-90">Ap ${ap.numeroAp} - ${ap.residenteEmail || "morador"}</div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Anima a notificação
+      setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Remove após 4 segundos
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 4000);
+      
+    } catch (error) {
+      // Feedback de erro
+      const errorNotification = document.createElement('div');
+      errorNotification.className = 'fixed top-4 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 transform translate-x-full transition-transform duration-300';
+      errorNotification.innerHTML = `
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">❌</span>
+          <div>
+            <div class="font-semibold">Erro ao Enviar</div>
+            <div class="text-sm opacity-90">Tente novamente em alguns instantes</div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(errorNotification);
+      
+      setTimeout(() => {
+        errorNotification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      setTimeout(() => {
+        errorNotification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          document.body.removeChild(errorNotification);
+        }, 300);
+      }, 4000);
     }
   };
 
@@ -119,13 +176,25 @@ export default function Dashboard() {
                 </h2>
 
                 {tab === "apartamentos" && (
-                  <button
-                    onClick={() => setShowAddModal(true)}
-                    className="p-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow transition-all hover:scale-105"
-                    title="Adicionar Apartamento"
-                  >
-                    <span className="text-2xl leading-none">+</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowOnlyUnpaid(!showOnlyUnpaid)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        showOnlyUnpaid
+                          ? "bg-red-600 text-white shadow-md"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      {showOnlyUnpaid ? "Mostrar Todos" : "Apenas Não Pagos"}
+                    </button>
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="p-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow transition-all hover:scale-105"
+                      title="Adicionar Apartamento"
+                    >
+                      <span className="text-2xl leading-none">+</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -133,7 +202,12 @@ export default function Dashboard() {
                 {loading ? (
                   <p className="text-gray-500">Carregando...</p>
                 ) : tab === "apartamentos" ? (
-                  <ApartamentosGrid apartamentos={apartamentos} onSelect={setSelectedAp} onNotify={notificar} />
+                  <ApartamentosGrid 
+                    apartamentos={showOnlyUnpaid ? apartamentos.filter(ap => !ap.pagamento) : apartamentos} 
+                    onSelect={setSelectedAp} 
+                    onNotify={notificar}
+                    showOnlyUnpaid={showOnlyUnpaid}
+                  />
                 ) : (
                   <RelatorioCharts apartamentos={apartamentos} />
                 )}
@@ -172,55 +246,115 @@ function Modal({ children }) {
   );
 }
 
-function ApartamentosGrid({ apartamentos, onSelect, onNotify }) {
+function ApartamentosGrid({ apartamentos, onSelect, onNotify, showOnlyUnpaid }) {
   if (!apartamentos.length)
     return (
-      <p className="text-center text-gray-500 py-6">
-        Nenhum apartamento cadastrado ainda.
-      </p>
+      <div className="text-center py-12">
+        <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <span className="text-gray-400 text-3xl">
+            {showOnlyUnpaid ? "🎉" : "🏠"}
+          </span>
+        </div>
+        <p className="text-gray-500 text-lg">
+          {showOnlyUnpaid 
+            ? "Todos os apartamentos estão em dia!" 
+            : "Nenhum apartamento cadastrado ainda."
+          }
+        </p>
+        <p className="text-gray-400 text-sm mt-2">
+          {showOnlyUnpaid 
+            ? "Parabéns! Todos os pagamentos estão em dia." 
+            : "Adicione apartamentos para começar a gerenciar."
+          }
+        </p>
+      </div>
     );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {apartamentos.map((ap) => (
         <div
           key={ap._id}
-          onClick={() => onSelect(ap)}
-          className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-5 hover:shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer"
+          className="bg-white/80 backdrop-blur-md border border-white/20 rounded-3xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer relative overflow-hidden"
         >
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-medium text-gray-800">
-                Apartamento {ap.numeroAp}
-              </h3>
-              <p className="text-sm text-gray-500">Andar {ap.andar}</p>
-            </div>
-            <span
-              className={`px-2 py-1 rounded-full text-xs ${
-                ap.pagamento
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {ap.pagamento ? "Pago" : "Pendente"}
-            </span>
-          </div>
-          <p className="text-sm mt-3 text-gray-700">
-            {ap.residenteNome || "-"}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            Vencimento: {new Date(ap.dueDate).toLocaleDateString()}
-          </p>
-          {!ap.pagamento && (
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); onNotify?.(ap); }}
-                className="px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 text-sm"
+          {/* Decorative elements */}
+          <div className="absolute -top-6 -right-6 w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-10"></div>
+          
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">🏠</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800 text-lg">
+                    Ap {ap.numeroAp}
+                  </h3>
+                  <p className="text-sm text-gray-500">Andar {ap.andar}</p>
+                </div>
+              </div>
+              
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  ap.pagamento
+                    ? "bg-green-100 text-green-700 border border-green-200"
+                    : "bg-red-100 text-red-700 border border-red-200"
+                }`}
               >
-                Notificar
-              </button>
+                {ap.pagamento ? "✅ Pago" : "⚠️ Pendente"}
+              </span>
             </div>
-          )}
+            
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">👤</span>
+                <span className="text-sm text-gray-700">
+                  {ap.residenteNome || "Morador não informado"}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">📅</span>
+                <span className="text-sm text-gray-700">
+                  Vence em {new Date(ap.dueDate).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">💰</span>
+                <span className="text-sm font-semibold text-blue-600">
+                  R$ {(ap.valor || 0).toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {!ap.pagamento ? (
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onSelect(ap); }}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
+                >
+                  📝 Editar
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onNotify?.(ap); }}
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 text-sm font-medium flex items-center gap-2"
+                >
+                  <span>🔔</span>
+                  Notificar
+                </button>
+              </div>
+            ) : (
+              <div className="mt-6">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onSelect(ap); }}
+                  className="w-full px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all duration-200 text-sm font-medium"
+                >
+                  📝 Ver Detalhes
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       ))}
     </div>
